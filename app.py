@@ -1,3 +1,6 @@
+import os
+os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+
 import streamlit as st
 import cv2
 import mediapipe as mp
@@ -5,7 +8,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import csv
-import os
 import random
 import glob
 

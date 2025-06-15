@@ -3,6 +3,7 @@ os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
 
 import streamlit as st
 import cv2
+import mediapipe as mp
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -13,11 +14,7 @@ import glob
 # =======================
 # Page Configuration
 # =======================
-st.set_page_config(
-    page_title="PresentSee",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(page_title="PresentSee - Futuristic Face & Gesture Attendance", layout="centered")
 
 st.markdown("""
 <style>

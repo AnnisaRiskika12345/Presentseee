@@ -12,7 +12,11 @@ import glob
 # =======================
 # Page Configuration
 # =======================
-st.set_page_config(page_title="PresentSee - Futuristic Face & Gesture Attendance", layout="centered")
+st.set_page_config(
+    page_title="PresentSee",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 st.markdown("""
 <style>

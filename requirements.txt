@@ -1,6 +1,5 @@
-streamlit
-opencv-python-headless
-mediapipe
-numpy
-pandas
-setuptools
+streamlit==1.32.2
+opencv-python-headless==4.8.0.76
+mediapipe==0.10.10
+numpy==1.24.4
+protobuf==3.20.3

@@ -8,3 +8,4 @@ opencv_python
 opencv_python_headless
 pandas
 streamlit
+cv2

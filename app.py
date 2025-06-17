@@ -1,5 +1,6 @@
 import streamlit as st
 import cv2
+import mediapipe as mp
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -353,18 +354,31 @@ def load_system_models():
     models = get_all_models()
     faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     smileCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_smile.xml")
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.7)
+    draw_utils = mp.solutions.drawing_utils
     names = load_employee_names()
     
-    return models, faceCascade, smileCascade, names
+    return models, faceCascade, smileCascade, hands, draw_utils, names
 
-recognizers, faceCascade, smileCascade, names = load_system_models()
+recognizers, faceCascade, smileCascade, hands, draw_utils, names = load_system_models()
 
 # =======================
 # Gesture Functions
 # =======================
-def count_fingers(hand_landmarks):
-    # Placeholder function since Mediapipe is removed
-    return random.randint(0, 5), random.randint(0, 5)
+def count_fingers(hand_landmarks, hand_label):
+    tips = [4, 8, 12, 16, 20]
+    fingers = []
+
+    if hand_label == "Right":
+        fingers.append(hand_landmarks.landmark[tips[0]].x < hand_landmarks.landmark[tips[0] - 1].x)
+    else:
+        fingers.append(hand_landmarks.landmark[tips[0]].x > hand_landmarks.landmark[tips[0] - 1].x)
+
+    for tip in tips[1:]:
+        fingers.append(hand_landmarks.landmark[tip].y < hand_landmarks.landmark[tip - 2].y)
+
+    return fingers.count(True)
 
 # =======================
 # Session State
@@ -411,8 +425,22 @@ if run:
                 break
 
             frame = cv2.flip(frame, 1)
+            frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             gray = cv2.equalizeHist(gray)
+
+            # Hand detection
+            hand_results = hands.process(frameRGB)
+            finger_counts = {'Left': 0, 'Right': 0}
+
+            if hand_results.multi_hand_landmarks:
+                for landmark, handedness in zip(hand_results.multi_hand_landmarks, hand_results.multi_handedness):
+                    label = handedness.classification[0].label
+                    draw_utils.draw_landmarks(frame, landmark, mp.solutions.hands.HAND_CONNECTIONS)
+                    finger_counts[label] = count_fingers(landmark, label)
+                    cv2.putText(frame, f"{label} Fingers: {finger_counts[label]}",
+                                (10, 60 if label == "Right" else 90),
+                                cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 255, 0), 2)
 
             # Face detection and recognition
             face_results = detect_and_recognize_faces(frame, gray, recognizers, names, faceCascade)
@@ -432,6 +460,7 @@ if run:
                     with debug_cols[i]:
                         st.image(face['roi'], caption=f"{name} ({confidence}%)")
                         st.write(f"Position: ({x},{y}) Size: {w}x{h}")
+                        st.write(f"Fingers: {finger_counts}")
 
                 if name != "Unknown":
                     st.session_state.unknown_start_time = None
@@ -458,8 +487,8 @@ if run:
                                        cv2.FONT_HERSHEY_COMPLEX, 0.6, (0, 255, 255), 2)
 
                         if (smiling and
-                            count_fingers("Right")[0] == st.session_state.target_fingers['Right'] and
-                            count_fingers("Left")[1] == st.session_state.target_fingers['Left'] and
+                            finger_counts["Right"] == st.session_state.target_fingers['Right'] and
+                            finger_counts["Left"] == st.session_state.target_fingers['Left'] and
                             name not in st.session_state.attendance_done):
 
                             if has_attended_today(name):
@@ -478,7 +507,6 @@ if run:
                     current_time = datetime.now()
                     if st.session_state.unknown_start_time is None:
                         st.session_state.unknown_start_time = current_time
-
                         cv2.putText(frame, "Menganalisis wajah...", (x, y - 10), 
                                    cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 255), 2)
                     else:

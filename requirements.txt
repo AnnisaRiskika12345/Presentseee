@@ -1,11 +1,6 @@
-Pillow
-torch
-torchvision
-ultralytics
-numpy
-opencv_contrib_python
-opencv_python
-opencv_python_headless
-pandas
-streamlit
-cv2
+mediapipe==0.8.11
+numpy==1.15.1
+numpy==1.21.5
+opencv_contrib_python==4.5.5.64
+pandas==1.4.2
+streamlit==1.32.2
